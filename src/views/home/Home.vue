@@ -1,10 +1,13 @@
 <template>
   <div id="home">
-    <nav-bar class="home-nav"><div slot="center">购物街</div></nav-bar>
+    <nav-bar class="home-nav">
+      <div slot="center">购物街</div>
+    </nav-bar>
     <home-swiper :banners="banners"></home-swiper>
     <recommend-view :recommends="recommends"></recommend-view>
     <feature-view></feature-view>
     <tab-control :titles="titles" class="tab-control"></tab-control>
+    <good-list :goods="goods['pop'].list"></good-list>
 
     <ul>
       <li>1</li>
@@ -118,8 +121,9 @@
 
   import NavBar from 'components/common/navbar/NavBar'
   import TabControl from 'components/content/tabControl/TabControl'
+  import GoodList from 'components/content/goods/GoodsList'
 
-  import {getHomeMultidata} from 'network/home'
+  import {getHomeMultidata, getHomeGoods} from 'network/home'
 
   export default {
     name: 'Home',
@@ -129,43 +133,67 @@
       HomeSwiper,
       RecommendView,
       FeatureView,
-      TabControl
+      TabControl,
+      GoodList
     },
     data () {
       return {
         banners: [],
         recommends: [],
-        titles: ['流行', '新款', '精选']
+        titles: ['流行', '新款', '精选'],
+        goods: {
+          'pop': {page: 0, list: []},
+          'new': {page: 0, list: []},
+          'sell': {page: 0, list: []}
+        }
       }
     },
     created () {
       // 请求多个数据
-      getHomeMultidata().then(res => {
-        this.banners = res.data.banner.list
-        this.recommends = res.data.recommend.list
-      })
+      this.getHomeMultidata()
+
+      // 请求商品数据 
+      // this.getHomeGoods('pop')
+      // this.getHomeGoods('new')
+      // this.getHomeGoods('sell')
+    },
+    methods: {
+      getHomeMultidata() {
+        getHomeMultidata().then(res => {
+          this.banners = res.data.banner.list
+          this.recommends = res.data.recommend.list
+        })
+      },
+      // getHomeGoods(type) {
+      //   // 请求商品数据 
+      //   const page = this.goods[type].page + 1
+      //   getHomeGoods(type, page).then(res => {
+      //     this.goods[type].list.push(...res.data.list)
+      //     this.goods[type].page += 1
+      //   })
+      // }
     }
   }
 </script>
 
 <style>
-  #home {
-    padding-top: 44px;
-  }
+#home {
+  padding-top: 44px;
+}
 
- .home-nav {
-   background: var(--color-tint);
-   color: #f5f0f0;
+.home-nav {
+  background: var(--color-tint);
+  color: #f5f0f0;
 
-   position: fixed;
-   left: 0;
-   right: 0;
-   top: 0;
-   z-index: 9;
- }
- 
- .tab-control {
-   position: sticky;
-   top: 44px
- }
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 9;
+}
+
+.tab-control {
+  position: sticky;
+  top: 44px;
+}
 </style>
