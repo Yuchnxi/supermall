@@ -6,8 +6,8 @@
     <home-swiper :banners="banners"></home-swiper>
     <recommend-view :recommends="recommends"></recommend-view>
     <feature-view></feature-view>
-    <tab-control :titles="titles" class="tab-control"></tab-control>
-    <good-list :goods="goods['pop'].list"></good-list>
+    <tab-control :titles="titles" class="tab-control" @tabClick='tabClick'></tab-control>
+    <good-list :goods="showGoods"></good-list>
 
     <ul>
       <li>1</li>
@@ -145,7 +145,13 @@
           'pop': {page: 0, list: []},
           'new': {page: 0, list: []},
           'sell': {page: 0, list: []}
-        }
+        },
+        currentType: 'pop'
+      }
+    },
+    computed: {
+      showGoods() {
+        return this.goods[this.currentType].list
       }
     },
     created () {
@@ -153,25 +159,46 @@
       this.getHomeMultidata()
 
       // 请求商品数据 
-      // this.getHomeGoods('pop')
-      // this.getHomeGoods('new')
-      // this.getHomeGoods('sell')
+      this.getHomeGoods('pop')
+      this.getHomeGoods('new')
+      this.getHomeGoods('sell')
     },
     methods: {
+      /**
+       *  事件监听相关的方法
+       */
+      tabClick(index) {
+        switch (index) {
+          case 0:
+            this.currentType = 'pop'
+            break;
+          case 1:
+            this.currentType = 'new'
+            break;
+          case 2:
+            this.currentType = 'sell'
+            break;
+        }
+      },
+
+
+      /**
+       *  网络请求相关的方法
+       */
       getHomeMultidata() {
         getHomeMultidata().then(res => {
           this.banners = res.data.banner.list
           this.recommends = res.data.recommend.list
         })
       },
-      // getHomeGoods(type) {
-      //   // 请求商品数据 
-      //   const page = this.goods[type].page + 1
-      //   getHomeGoods(type, page).then(res => {
-      //     this.goods[type].list.push(...res.data.list)
-      //     this.goods[type].page += 1
-      //   })
-      // }
+      getHomeGoods(type) {
+        // 请求商品数据 
+        const page = this.goods[type].page + 1
+        getHomeGoods(type, page).then(res => {
+          this.goods[type].list.push(...res.data.list)
+          this.goods[type].page += 1
+        })
+      }
     }
   }
 </script>
@@ -195,5 +222,6 @@
 .tab-control {
   position: sticky;
   top: 44px;
+  z-index: 9;
 }
 </style>
