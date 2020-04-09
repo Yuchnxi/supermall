@@ -119,13 +119,19 @@ export default {
   },
   mounted () {
     this.scroll = new BScroll('.wrapper', {
+      probeType: 3,
+      pullUpLoad: true
+    })
 
+    this.scroll.on('scroll', (position) => {
+      console.log(position);
+      
     })
   }
 }
 </script>
 
-<style>
+<style scoped>
 .wrapper {
   height: 150px;
   background: pink;

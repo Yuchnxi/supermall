@@ -19,6 +19,7 @@ export default new Router({
     { path: '/category', component: Category },
     { path: '/profile', component: Profile }
   ],
-  mode: 'history'
+  mode: 'history',
+  base: '/hot/'
 })
  
