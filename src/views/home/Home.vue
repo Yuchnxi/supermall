@@ -3,7 +3,7 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
-    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true" @pullingUp="loadMore">
+    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true">
       <home-swiper :banners="banners"></home-swiper>
       <recommend-view :recommends="recommends"></recommend-view>
       <feature-view></feature-view>
@@ -60,18 +60,39 @@ export default {
     }
   },
   created() {
-    // 请求多个数据
+    // 1. 请求多个数据
     this.getHomeMultidata();
 
-    // 请求商品数据
+    // 2. 请求商品数据
     this.getHomeGoods("pop");
     this.getHomeGoods("new");
     this.getHomeGoods("sell");
+
+  },
+  mounted () {
+    // 监听 item 中图片加载完成
+    const refresh = this.debounce(this.$refs.scroll.refresh, 500)
+
+    this.$bus.$on('itemImageLoad', () => {
+      refresh()
+    })
   },
   methods: {
     /**
      *  事件监听相关的方法
      */
+
+    debounce(func, delay) {
+      let timer = null
+
+      return function (...args) {
+        if (timer) clearTimeout(timer)
+
+        timer = setTimeout(() => {
+          func.apply(this, args)
+        }, delay)
+      }
+    },
     tabClick(index) {
       switch (index) {
         case 0:
@@ -93,14 +114,6 @@ export default {
     contentScroll(position) {
       this.isShowBackTop = (-position.y) > 1000
     },
-    // 监听上拉加载更多
-    loadMore() {
-      this.getHomeGoods(this.currentType)
-
-      // 进行一次刷新
-      this.$refs.scroll.refresh()
-    },
-
 
     /**
      *  网络请求相关的方法
@@ -118,7 +131,6 @@ export default {
         this.goods[type].list.push(...res.data.list);
         this.goods[type].page += 1;
 
-        this.$refs.scroll.finishPullUp()
       });
     }
   }
