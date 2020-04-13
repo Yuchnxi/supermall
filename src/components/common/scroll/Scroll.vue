@@ -15,6 +15,10 @@ export default {
     probeType: {
       type: Number,
       default: 0
+    },
+    pullUpLoad: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
@@ -31,9 +35,18 @@ export default {
     })
 
     // 2. 监听滚动的位置
-    this.scroll.on('scroll', (position) => {
-      this.$emit('scroll', position)
-    })
+    if (this.probeType === 2 || this.probeType === 3) {
+      this.scroll.on('scroll', (position) => {
+        this.$emit('scroll', position)
+      })
+    }
+
+    // 3. 监听 scroll 滚动到底部
+    if (this.pullUpLoad) {
+      this.scroll.on('pullingUp', () => {
+        this.$emit('pullingUp')
+      })
+    }
 
   },
   methods: {
@@ -45,7 +58,6 @@ export default {
     },
     refresh() {
       this.scroll && this.scroll.refresh()
-      console.log('----')
     }
   }
 }

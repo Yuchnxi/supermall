@@ -3,11 +3,11 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
-    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true">
+    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true" @pullingUp="loadMore">
       <home-swiper :banners="banners"></home-swiper>
       <recommend-view :recommends="recommends"></recommend-view>
       <feature-view></feature-view>
-      <tab-control :titles="titles" class="tab-control" @tabClick="tabClick"></tab-control>
+      <tab-control :titles="titles" @tabClick="tabClick"></tab-control>
       <good-list :goods="showGoods"></good-list>
     </scroll>
     <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
@@ -26,6 +26,7 @@ import Scroll from "components/common/scroll/Scroll";
 import BackTop from 'components/content/backTop/BackTop';
 
 import { getHomeMultidata, getHomeGoods } from "network/home";
+import { debounce } from "common/utils"
 
 export default {
   name: "Home",
@@ -71,7 +72,7 @@ export default {
   },
   mounted () {
     // 监听 item 中图片加载完成
-    const refresh = this.debounce(this.$refs.scroll.refresh, 500)
+    const refresh = debounce(this.$refs.scroll.refresh, 500)
 
     this.$bus.$on('itemImageLoad', () => {
       refresh()
@@ -82,17 +83,6 @@ export default {
      *  事件监听相关的方法
      */
 
-    debounce(func, delay) {
-      let timer = null
-
-      return function (...args) {
-        if (timer) clearTimeout(timer)
-
-        timer = setTimeout(() => {
-          func.apply(this, args)
-        }, delay)
-      }
-    },
     tabClick(index) {
       switch (index) {
         case 0:
@@ -114,6 +104,10 @@ export default {
     contentScroll(position) {
       this.isShowBackTop = (-position.y) > 1000
     },
+    // 监听上拉加载更多
+    loadMore() {
+      this.getHomeGoods(this.currentType)
+    },
 
     /**
      *  网络请求相关的方法
@@ -131,6 +125,7 @@ export default {
         this.goods[type].list.push(...res.data.list);
         this.goods[type].page += 1;
 
+        this.$refs.scroll.finishPullUp()
       });
     }
   }
@@ -155,11 +150,6 @@ export default {
   z-index: 9;
 }
 
-.tab-control {
-  position: sticky;
-  top: 44px;
-  z-index: 9;
-}
 
 .content {
   overflow: hidden;
