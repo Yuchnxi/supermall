@@ -3,11 +3,12 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
+    <tab-control :titles="titles" @tabClick="tabClick" ref="tabControl1" class="tab-control" v-show="isTabFixed"></tab-control>
     <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true" @pullingUp="loadMore">
-      <home-swiper :banners="banners"></home-swiper>
+      <home-swiper :banners="banners" @swiperImageLoad="swiperImageLoad"></home-swiper>
       <recommend-view :recommends="recommends"></recommend-view>
       <feature-view></feature-view>
-      <tab-control :titles="titles" @tabClick="tabClick"></tab-control>
+      <tab-control :titles="titles" @tabClick="tabClick" ref="tabControl2" ></tab-control>
       <good-list :goods="showGoods"></good-list>
     </scroll>
     <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
@@ -52,14 +53,19 @@ export default {
         sell: { page: 0, list: [] }
       },
       currentType: "pop",
-      isShowBackTop: false
+      isShowBackTop: false,
+      tabOffsetTop: 0,
+      isTabFixed: false,
+      saveY: 0
     };
   },
+  // 计算属性
   computed: {
     showGoods() {
       return this.goods[this.currentType].list;
     }
   },
+  // 生命周期钩子 可以调用methods中的方法、改变data中的数据
   created() {
     // 1. 请求多个数据
     this.getHomeMultidata();
@@ -70,13 +76,22 @@ export default {
     this.getHomeGoods("sell");
 
   },
+  activated () {
+    this.$refs.scroll.scrollTo(0, this.saveY, 0)
+    this.$refs.scroll.refresh()
+  },
+  deactivated () {
+    this.saveY = this.$refs.scroll.getScrollY()
+  },
+  // 生命周期钩子 vue实例已经挂载到页面中，可以获取到el中的DOM元素，进行DOM操作
   mounted () {
-    // 监听 item 中图片加载完成
+    // 1.监听 item 中图片加载完成
     const refresh = debounce(this.$refs.scroll.refresh, 500)
-
     this.$bus.$on('itemImageLoad', () => {
       refresh()
     })
+
+    // 2. 获取 tabControl 的 offsetTop 
   },
   methods: {
     /**
@@ -95,6 +110,8 @@ export default {
           this.currentType = "sell";
           break;
       }
+      this.$refs.tabControl1.currentIndex = index
+      this.$refs.tabControl2.currentIndex = index
     },
     // 监听点击回归顶部
     backClick() {
@@ -102,11 +119,17 @@ export default {
     },
     // 监听滚动位置
     contentScroll(position) {
+      // 1. 判断 BackTop 是否显示
       this.isShowBackTop = (-position.y) > 1000
+      // 2. 决定 tabControl 是否吸顶（ position：fixed ）
+      this.isTabFixed = (-position.y) > this.tabOffsetTop
     },
     // 监听上拉加载更多
     loadMore() {
       this.getHomeGoods(this.currentType)
+    },
+    swiperImageLoad() {
+      this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop
     },
 
     /**
@@ -134,7 +157,7 @@ export default {
 
 <style scope>
 #home {
-  padding-top: 44px;
+  /* padding-top: 44px; */
   height: 100vh;
   position: relative;
 }
@@ -143,13 +166,12 @@ export default {
   background: var(--color-tint);
   color: #f5f0f0;
 
-  position: fixed;
+  /* position: fixed;
   left: 0;
   right: 0;
   top: 0;
-  z-index: 9;
+  z-index: 9; */
 }
-
 
 .content {
   overflow: hidden;
@@ -159,5 +181,10 @@ export default {
   bottom: 49px;
   left: 0;
   right: 0;
+}
+
+.tab-control {
+  position: relative;
+  z-index: 9;
 }
 </style>
