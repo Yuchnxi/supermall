@@ -15,7 +15,7 @@
       <div class="info-detail">
         <p>{{commentInfo.content}}</p>
         <div class="info-other">
-          <span class="date">{{commentInfo.created}}</span>
+          <span class="date">{{commentInfo.created | showDate}}</span>
           <span>{{commentInfo.style}}</span>
         </div>
         <div class="info-imgs">
@@ -39,12 +39,15 @@
         }
       }
     },
-    // filters: {
-		//   showDate: function (value) {
-    //     let date = new Date(value*1000);
-    //     return formatDate(date, 'yyyy-MM-dd')
-    //   }
-    // }
+    filters: {
+		  showDate(value) {
+        // 1. 将时间戳转成 Date 对象
+        const date = new Date(value * 1000);
+
+        // 2. 将 date 进行格式化
+        return formatDate(date, 'yyyy-MM-dd')
+      }
+    }
 	}
 </script>
 

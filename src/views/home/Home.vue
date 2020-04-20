@@ -56,7 +56,8 @@ export default {
       isShowBackTop: false,
       tabOffsetTop: 0,
       isTabFixed: false,
-      saveY: 0
+      saveY: 0,
+      itemImgListener: null
     };
   },
   // 计算属性
@@ -81,17 +82,24 @@ export default {
     this.$refs.scroll.refresh()
   },
   deactivated () {
+    // 1. 保存 Y 值
     this.saveY = this.$refs.scroll.getScrollY()
+
+    // 2. 取消全局事件的监听
+    this.$bus.$off('itemImgLoad', this.itemImgListener)
   },
   // 生命周期钩子 vue实例已经挂载到页面中，可以获取到el中的DOM元素，进行DOM操作
   mounted () {
     // 1.监听 item 中图片加载完成
     const refresh = debounce(this.$refs.scroll.refresh, 500)
-    this.$bus.$on('itemImageLoad', () => {
-      refresh()
-    })
 
-    // 2. 获取 tabControl 的 offsetTop 
+    this.itemImgListener = () => {
+      refresh()
+    }
+
+    this.$bus.$on('itemImageLoad', this.itemImgListener)
+
+    
   },
   methods: {
     /**

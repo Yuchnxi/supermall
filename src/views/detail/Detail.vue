@@ -8,6 +8,7 @@
       <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad"></detail-goods-info>
       <detail-param-info :param-info="paramInfo"></detail-param-info>
       <detail-comment-info :comment-info="commentInfo"></detail-comment-info>
+      <goods-list :goods="recommends"></goods-list>
     </scroll>
   </div>
 </template>
@@ -23,8 +24,11 @@ import DetailParamInfo from './childComps/DetailParamInfo'
 import DetailCommentInfo from './childComps/DetailCommentInfo'
 
 import Scroll from 'components/common/scroll/Scroll'
+import GoodsList from 'components/content/goods/GoodsList'
 
-import {getDetail, Goods, Shop, GoodsParam} from 'network/detail'
+import { debounce } from "common/utils"
+
+import {getDetail, getRecommend, Goods, Shop, GoodsParam} from 'network/detail'
 
 export default {
   name: 'Detail',
@@ -36,7 +40,9 @@ export default {
       shop: {},
       detailInfo: {},
       paramInfo: {},
-      commentInfo: {}
+      commentInfo: {},
+      recommends: [],
+      itemImglistener: null
     }
   },
   components: {
@@ -47,7 +53,8 @@ export default {
     DetailGoodsInfo,
     DetailParamInfo,
     DetailCommentInfo,
-    Scroll
+    Scroll,
+    GoodsList
   },
   created(){
     // 1. 保存传入的 iid
@@ -56,7 +63,6 @@ export default {
     // 2. 根据 iid 请求详情数据
     getDetail(this.iid).then(res => {
         // 1. 获取顶部的图片轮播数据
-        console.log(res)
         const data = res.result
         this.topImages = data.itemInfo.topImages
 
@@ -76,13 +82,31 @@ export default {
         if (data.rate.cRate !== 0) {
           this.commentInfo = data.rate.list[0]
         }
-      })
+        
+    })
+
+    // 获取推荐信息
+    getRecommend().then(res => {
+      console.log(res)
+      this.recommends = res.data.list
+    })
   },
-  mounted(){},
+  mounted(){
+    let newRefresh = debounce(this.$refs.scroll.refresh, 500)
+
+    this.itemImglistener = () => {
+      newRefresh()
+    }
+
+    this.$bus.$on('itemImgLoad', this.itemImglistener)
+  },
   methods: {
     imageLoad() {
       this.$refs.scroll.refresh()
     }
+  },
+  destroyed () {
+    this.$bus.$of('itemImgLoad', this.itemImglistener)
   }
 }
 </script>
